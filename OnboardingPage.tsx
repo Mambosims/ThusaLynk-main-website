@@ -23,13 +23,44 @@ const OnboardingPage: React.FC<OnboardingPageProps> = ({ onBack }) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSyncing(true);
-    const agencyEmail = "contact@thusalynk.ai";
-    const userEmail = formData.email;
-    const subject = encodeURIComponent(`Infrastructure Audit Request: ${formData.company}`);
-    const emailBody = `
+    
+    const webhookUrl = 'http://localhost:5678/webhook/communication hub'; // Update with your actual n8n production URL
+    
+    const payload = {
+      type: 'internal_notif',
+      data: {
+        event: 'New audit form submission',
+        detail: `Company: ${formData.company} | Goal: ${formData.partnershipGoal} | Team: ${formData.companySize} | Budget: ${formData.projectBudget}`,
+        action: 'Review lead and send discovery call link within 24 hours',
+        // Also trigger lead creation in Notion via W1 → W2:
+        clientName: formData.name,
+        clientEmail: formData.email,
+        company: formData.company,
+        operationalDebt: formData.bottlenecks
+      }
+    };
+
+    try {
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) throw new Error('Network response was not ok');
+
+      setSubmitted(true);
+      setIsSyncing(false);
+    } catch (error) {
+      console.error('Hub call failed, falling back to mailto', error);
+      
+      // Fallback mailto logic
+      const agencyEmail = "mambosims2nd@gmail.com";
+      const subject = encodeURIComponent(`Infrastructure Audit Request: ${formData.company}`);
+      const emailBody = `
 THUSALYNK PROTOCOL INITIALIZATION
 ==================================
 A formal request for operational infrastructure audit has been received.
@@ -53,14 +84,12 @@ This email confirms the synchronization of your initialization parameters.
 ThusaLynk will review this data and contact you to schedule a primary consultation.
 
 Status: COMPILED & PENDING HANDSHAKE
-    `.trim();
-    const compiledBody = encodeURIComponent(emailBody);
-
-    setTimeout(() => {
+      `.trim();
+      
+      window.location.href = `mailto:${agencyEmail}?subject=${subject}&body=${encodeURIComponent(emailBody)}`;
       setSubmitted(true);
       setIsSyncing(false);
-      window.location.href = `mailto:${agencyEmail},${userEmail}?subject=${subject}&body=${compiledBody}`;
-    }, 2500);
+    }
   };
 
   if (isSyncing) {
