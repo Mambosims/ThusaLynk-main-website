@@ -27,19 +27,20 @@ const OnboardingPage: React.FC<OnboardingPageProps> = ({ onBack }) => {
     e.preventDefault();
     setIsSyncing(true);
     
-    const webhookUrl = 'http://localhost:5678/webhook/communication hub'; // Update with your actual n8n production URL
+    // Updated to proper URL path for n8n trigger
+    const webhookUrl = 'http://localhost:5678/webhook/communication-hub'; 
     
     const payload = {
       type: 'internal_notif',
       data: {
         event: 'New audit form submission',
-        detail: `Company: ${formData.company} | Goal: ${formData.partnershipGoal} | Team: ${formData.companySize} | Budget: ${formData.projectBudget}`,
+        detail: `Company: ${formData.company} | Goal: ${formData.partnershipGoal} | Team: ${formData.companySize}`,
         action: 'Review lead and send discovery call link within 24 hours',
-        // Also trigger lead creation in Notion via W1 → W2:
         clientName: formData.name,
         clientEmail: formData.email,
         company: formData.company,
-        operationalDebt: formData.bottlenecks
+        operationalDebt: formData.bottlenecks,
+        agencyEmail: "mambosims2nd@gmail.com" // Explicit agency notification
       }
     };
 
@@ -50,16 +51,16 @@ const OnboardingPage: React.FC<OnboardingPageProps> = ({ onBack }) => {
         body: JSON.stringify(payload)
       });
 
-      if (!response.ok) throw new Error('Network response was not ok');
+      if (!response.ok) throw new Error('Trigger failure');
 
       setSubmitted(true);
       setIsSyncing(false);
     } catch (error) {
-      console.error('Hub call failed, falling back to mailto', error);
+      console.warn('Hub trigger deferred, using direct protocol sync...', error);
       
-      // Fallback mailto logic
+      // Fallback direct notification to agency and client
       const agencyEmail = "mambosims2nd@gmail.com";
-      const subject = encodeURIComponent(`Infrastructure Audit Request: ${formData.company}`);
+      const subject = encodeURIComponent(`[INIT] Infrastructure Audit: ${formData.company}`);
       const emailBody = `
 THUSALYNK PROTOCOL INITIALIZATION
 ==================================
@@ -72,20 +73,20 @@ CLIENT PARAMETERS:
 - Company: ${formData.company}
 - Employee Count: ${formData.companySize}
 - Primary Goal: ${formData.partnershipGoal}
-- Budget Parameter: ${formData.projectBudget}
 
 OPERATIONAL DEBT SUMMARY:
 ------------------------
 - Identified Bottlenecks: ${formData.bottlenecks}
 
-CONFIRMATION:
--------------
-This email confirms the synchronization of your initialization parameters. 
-ThusaLynk will review this data and contact you to schedule a primary consultation.
+INFRASTRUCTURE HANDSHAKE:
+------------------------
+This request has been logged and is being routed to the ThusaLynk engineering team.
+Final notification: mambosims2nd@gmail.com
 
-Status: COMPILED & PENDING HANDSHAKE
+Status: MANUAL_SYNC_REQUIRED
       `.trim();
       
+      // Triggering mailto to ensure agency gets notified even if webhook is unreachable
       window.location.href = `mailto:${agencyEmail}?subject=${subject}&body=${encodeURIComponent(emailBody)}`;
       setSubmitted(true);
       setIsSyncing(false);
