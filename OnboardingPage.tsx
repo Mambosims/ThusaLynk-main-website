@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   RefreshCw, 
@@ -13,7 +14,6 @@ interface OnboardingPageProps {
 const OnboardingPage: React.FC<OnboardingPageProps> = ({ onBack }) => {
   const [submitted, setSubmitted] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '', email: '', company: '', bottlenecks: '',
     companySize: '', projectBudget: '', partnershipGoal: ''
@@ -26,43 +26,69 @@ const OnboardingPage: React.FC<OnboardingPageProps> = ({ onBack }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSyncing(true);
-    setError(null);
-
-    // ✅ Replace YOUR_FORM_ID with your actual Formspree form ID
-    // Sign up free at https://formspree.io → New Form → copy the ID
-    const FORMSPREE_URL = 'https://formspree.io/f/mbdbrwng';
-
+    
+    // Updated to proper URL path for n8n trigger
+    const webhookUrl = 'https://thusalynk.app.n8n.cloud/webhook/communication hub'; 
+    
     const payload = {
-      name: formData.name,
-      email: formData.email,
-      company: formData.company,
-      companySize: formData.companySize,
-      partnershipGoal: formData.partnershipGoal,
-      bottlenecks: formData.bottlenecks,
-      _subject: `[AUDIT REQUEST] ${formData.company} — ThusaLynk Infrastructure Audit`,
-      _replyto: formData.email,
+      type: 'internal_notif',
+      data: {
+        event: 'New audit form submission',
+        detail: `Company: ${formData.company} | Goal: ${formData.partnershipGoal} | Team: ${formData.companySize}`,
+        action: 'Review lead and send discovery call link within 24 hours',
+        clientName: formData.name,
+        clientEmail: formData.email,
+        company: formData.company,
+        operationalDebt: formData.bottlenecks,
+        agencyEmail: "mambosims2nd@gmail.com" // Explicit agency notification
+      }
     };
 
     try {
-      const response = await fetch(FORMSPREE_URL, {
+      const response = await fetch(webhookUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data?.error || 'Submission failed');
-      }
+      if (!response.ok) throw new Error('Trigger failure');
 
       setSubmitted(true);
-    } catch (err) {
-      console.error('Form submission error:', err);
-      setError('Submission failed. Please try again or email mambosims2nd@gmail.com directly.');
-    } finally {
+      setIsSyncing(false);
+    } catch (error) {
+      console.warn('Hub trigger deferred, using direct protocol sync...', error);
+      
+      // Fallback direct notification to agency and client
+      const agencyEmail = "mambosims2nd@gmail.com";
+      const subject = encodeURIComponent(`[INIT] Infrastructure Audit: ${formData.company}`);
+      const emailBody = `
+THUSALYNK PROTOCOL INITIALIZATION
+==================================
+A formal request for operational infrastructure audit has been received.
+
+CLIENT PARAMETERS:
+------------------
+- Name: ${formData.name}
+- Email: ${formData.email}
+- Company: ${formData.company}
+- Employee Count: ${formData.companySize}
+- Primary Goal: ${formData.partnershipGoal}
+
+OPERATIONAL DEBT SUMMARY:
+------------------------
+- Identified Bottlenecks: ${formData.bottlenecks}
+
+INFRASTRUCTURE HANDSHAKE:
+------------------------
+This request has been logged and is being routed to the ThusaLynk engineering team.
+Final notification: mambosims2nd@gmail.com
+
+Status: MANUAL_SYNC_REQUIRED
+      `.trim();
+      
+      // Triggering mailto to ensure agency gets notified even if webhook is unreachable
+      window.location.href = `mailto:${agencyEmail}?subject=${subject}&body=${encodeURIComponent(emailBody)}`;
+      setSubmitted(true);
       setIsSyncing(false);
     }
   };
@@ -92,10 +118,10 @@ const OnboardingPage: React.FC<OnboardingPageProps> = ({ onBack }) => {
            <p className="opacity-80">&gt;&gt; From: ThusaLynk Architect</p>
            <p className="opacity-80">&gt;&gt; To: {formData.email}</p>
            <p className="opacity-80">&gt;&gt; Status: <span className="text-slate-500">PARAM_COMPILED</span></p>
-           <p className="opacity-50 pt-4 leading-relaxed italic">"Your audit request has been received. We'll be in touch within 24 hours."</p>
+           <p className="opacity-50 pt-4 leading-relaxed italic">"Final Step: Send the generated email from your client to finalize the handshake."</p>
         </div>
         <div className="flex gap-4">
-          <button onClick={() => { setSubmitted(false); setFormData({ name: '', email: '', company: '', bottlenecks: '', companySize: '', projectBudget: '', partnershipGoal: '' }); }} className="bg-slate-600 text-white px-10 py-4 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-500 transition-all active:scale-95">Reset Protocol</button>
+          <button onClick={() => setSubmitted(false)} className="bg-slate-600 text-white px-10 py-4 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-500 transition-all active:scale-95">Reset Protocol</button>
           <button onClick={onBack} className="glass-card text-current px-10 py-4 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-500/10 transition-all active:scale-95">Return to Hub</button>
         </div>
       </div>
@@ -161,13 +187,6 @@ const OnboardingPage: React.FC<OnboardingPageProps> = ({ onBack }) => {
               <label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-1">Operational Debt Summary</label>
               <textarea required placeholder="Briefly describe your current manual bottlenecks..." className="w-full h-32 bg-[var(--bg)]/40 border border-[var(--border)] rounded-xl py-4 px-5 text-sm font-semibold focus:border-slate-500/50 outline-none resize-none" value={formData.bottlenecks} onChange={e => setFormData({...formData, bottlenecks: e.target.value})} />
             </div>
-
-            {error && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-5 py-4 text-xs font-semibold text-red-400">
-                {error}
-              </div>
-            )}
-
             <button type="submit" className="w-full bg-slate-600 text-white py-5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-500 transition-all transform active:scale-95 shadow-2xl flex items-center justify-center gap-2">
               INITIALIZE PROTOCOL AUDIT <ArrowRight size={16} />
             </button>
