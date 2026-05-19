@@ -16,7 +16,7 @@ const OnboardingPage: React.FC<OnboardingPageProps> = ({ onBack }) => {
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '', email: '', company: '', bottlenecks: '',
-    companySize: '', projectBudget: '', partnershipGoal: ''
+    companySize: '', partnershipGoal: ''
   });
 
   useEffect(() => {
@@ -28,35 +28,35 @@ const OnboardingPage: React.FC<OnboardingPageProps> = ({ onBack }) => {
     setIsSyncing(true);
     setError(null);
 
-    const webhookUrl = 'https://thusalynk.app.n8n.cloud/webhook/communication-hub';
-
-    const payload = {
-      type: 'internal_notif',
-      data: {
-        event: 'New audit form submission',
-        detail: `Company: ${formData.company} | Goal: ${formData.partnershipGoal} | Team: ${formData.companySize}`,
-        action: 'Review lead and send discovery call link within 24 hours',
-        clientName: formData.name,
-        clientEmail: formData.email,
-        company: formData.company,
-        operationalDebt: formData.bottlenecks,
-        agencyEmail: 'mambosims2nd@gmail.com'
-      }
-    };
-
     try {
-      const response = await fetch(webhookUrl, {
+      const response = await fetch('https://formspree.io/f/mbdbrwng', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          company: formData.company,
+          companySize: formData.companySize,
+          partnershipGoal: formData.partnershipGoal,
+          bottlenecks: formData.bottlenecks,
+          _subject: `[AUDIT REQUEST] ${formData.company} — ThusaLynk Infrastructure Audit`,
+          _replyto: formData.email,
+        })
       });
 
-      if (!response.ok) throw new Error(`Server responded with ${response.status}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || 'Submission failed');
+      }
 
       setSubmitted(true);
     } catch (err) {
-      console.error('Webhook error:', err);
-      setError('Submission failed. Please check your connection and try again, or email mambosims2nd@gmail.com directly.');
+      console.error('Form error:', err);
+      setError('Submission failed. Please try again or email mambosims2nd@gmail.com directly.');
     } finally {
       setIsSyncing(false);
     }
@@ -93,7 +93,7 @@ const OnboardingPage: React.FC<OnboardingPageProps> = ({ onBack }) => {
           <button
             onClick={() => {
               setSubmitted(false);
-              setFormData({ name: '', email: '', company: '', bottlenecks: '', companySize: '', projectBudget: '', partnershipGoal: '' });
+              setFormData({ name: '', email: '', company: '', bottlenecks: '', companySize: '', partnershipGoal: '' });
             }}
             className="bg-slate-600 text-white px-10 py-4 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-500 transition-all active:scale-95"
           >
@@ -131,21 +131,29 @@ const OnboardingPage: React.FC<OnboardingPageProps> = ({ onBack }) => {
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-1">Full Name</label>
-                <input required type="text" placeholder="John Doe" className="w-full bg-[var(--bg)]/40 border border-[var(--border)] rounded-xl py-4 px-5 text-sm font-semibold focus:border-slate-500/50 outline-none" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                <input required type="text" placeholder="John Doe"
+                  className="w-full bg-[var(--bg)]/40 border border-[var(--border)] rounded-xl py-4 px-5 text-sm font-semibold focus:border-slate-500/50 outline-none"
+                  value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
               </div>
               <div className="space-y-2">
                 <label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-1">Professional Email</label>
-                <input required type="email" placeholder="john@company.com" className="w-full bg-[var(--bg)]/40 border border-[var(--border)] rounded-xl py-4 px-5 text-sm font-semibold focus:border-slate-500/50 outline-none" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                <input required type="email" placeholder="john@company.com"
+                  className="w-full bg-[var(--bg)]/40 border border-[var(--border)] rounded-xl py-4 px-5 text-sm font-semibold focus:border-slate-500/50 outline-none"
+                  value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
               </div>
             </div>
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-1">Company Entity</label>
-                <input required type="text" placeholder="Acme Corp" className="w-full bg-[var(--bg)]/40 border border-[var(--border)] rounded-xl py-4 px-5 text-sm font-semibold focus:border-slate-500/50 outline-none" value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} />
+                <input required type="text" placeholder="Acme Corp"
+                  className="w-full bg-[var(--bg)]/40 border border-[var(--border)] rounded-xl py-4 px-5 text-sm font-semibold focus:border-slate-500/50 outline-none"
+                  value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} />
               </div>
               <div className="space-y-2">
                 <label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-1">Operational Scale</label>
-                <select required className="w-full bg-[var(--bg)]/40 border border-[var(--border)] rounded-xl py-4 px-5 text-sm font-semibold outline-none cursor-pointer" value={formData.companySize} onChange={e => setFormData({...formData, companySize: e.target.value})}>
+                <select required
+                  className="w-full bg-[var(--bg)]/40 border border-[var(--border)] rounded-xl py-4 px-5 text-sm font-semibold outline-none cursor-pointer"
+                  value={formData.companySize} onChange={e => setFormData({...formData, companySize: e.target.value})}>
                   <option value="" disabled>Team Size</option>
                   <option value="1-3">1-3 Experts</option>
                   <option value="4-15">4-15 Professionals</option>
@@ -156,7 +164,9 @@ const OnboardingPage: React.FC<OnboardingPageProps> = ({ onBack }) => {
             </div>
             <div className="space-y-2">
               <label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-1">Primary Infrastructure Goal</label>
-              <select required className="w-full bg-[var(--bg)]/40 border border-[var(--border)] rounded-xl py-4 px-5 text-sm font-semibold outline-none cursor-pointer" value={formData.partnershipGoal} onChange={e => setFormData({...formData, partnershipGoal: e.target.value})}>
+              <select required
+                className="w-full bg-[var(--bg)]/40 border border-[var(--border)] rounded-xl py-4 px-5 text-sm font-semibold outline-none cursor-pointer"
+                value={formData.partnershipGoal} onChange={e => setFormData({...formData, partnershipGoal: e.target.value})}>
                 <option value="" disabled>Select Objective</option>
                 <option value="Communication Protocols">Communication Protocols (Inbox/LinkedIn)</option>
                 <option value="Workspace Hierarchy">Workspace Hierarchy (Drive/Doc Sync)</option>
@@ -167,7 +177,9 @@ const OnboardingPage: React.FC<OnboardingPageProps> = ({ onBack }) => {
             </div>
             <div className="space-y-2">
               <label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-1">Operational Debt Summary</label>
-              <textarea required placeholder="Briefly describe your current manual bottlenecks..." className="w-full h-32 bg-[var(--bg)]/40 border border-[var(--border)] rounded-xl py-4 px-5 text-sm font-semibold focus:border-slate-500/50 outline-none resize-none" value={formData.bottlenecks} onChange={e => setFormData({...formData, bottlenecks: e.target.value})} />
+              <textarea required placeholder="Briefly describe your current manual bottlenecks..."
+                className="w-full h-32 bg-[var(--bg)]/40 border border-[var(--border)] rounded-xl py-4 px-5 text-sm font-semibold focus:border-slate-500/50 outline-none resize-none"
+                value={formData.bottlenecks} onChange={e => setFormData({...formData, bottlenecks: e.target.value})} />
             </div>
 
             {error && (
@@ -176,7 +188,8 @@ const OnboardingPage: React.FC<OnboardingPageProps> = ({ onBack }) => {
               </div>
             )}
 
-            <button type="submit" className="w-full bg-slate-600 text-white py-5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-500 transition-all transform active:scale-95 shadow-2xl flex items-center justify-center gap-2">
+            <button type="submit"
+              className="w-full bg-slate-600 text-white py-5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-500 transition-all transform active:scale-95 shadow-2xl flex items-center justify-center gap-2">
               INITIALIZE PROTOCOL AUDIT <ArrowRight size={16} />
             </button>
           </div>
