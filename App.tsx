@@ -535,8 +535,8 @@ const Footer = () => (
           Architecting structural clarity for high-performance firms. We bridge the gap between technical expertise and operational excellence.
         </p>
         <div className="flex gap-4">
-           <a href="#" className="p-3 glass-card rounded-xl hover:bg-slate-500/10 transition-all opacity-50 hover:opacity-100"><Linkedin size={18} /></a>
-           <a href="mailto:contact@thusalynk.ai" className="p-3 glass-card rounded-xl hover:bg-slate-500/10 transition-all opacity-50 hover:opacity-100"><Mail size={18} /></a>
+           <a href="https://www.linkedin.com/in/thusalynk/" className="p-3 glass-card rounded-xl hover:bg-slate-500/10 transition-all opacity-50 hover:opacity-100"><Linkedin size={18} /></a>
+           <a href="mailto:mambosims2nd@gmail.com" className="p-3 glass-card rounded-xl hover:bg-slate-500/10 transition-all opacity-50 hover:opacity-100"><Mail size={18} /></a>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-12 md:gap-24">
