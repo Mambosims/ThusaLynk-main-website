@@ -29,7 +29,7 @@ const OnboardingPage: React.FC<OnboardingPageProps> = ({ onBack }) => {
     setError(null);
 
     try {
-      const response = await fetch('https://formspree.io/f/mbdbrwng', {
+      const response = await fetch('https://giver-quarters-hardcore.ngrok-free.dev/webhook/communication-hub', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
