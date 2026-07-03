@@ -27,6 +27,22 @@ const OnboardingPage: React.FC<OnboardingPageProps> = ({ onBack }) => {
     e.preventDefault();
     setIsSyncing(true);
     setError(null);
+    
+    const payload = {
+    type: 'internal_notif', // This is what your Switch node uses to route
+    data: {
+      event: 'New audit form submission',
+      detail: `Company: ${formData.company} | Goal: ${formData.partnershipGoal} | Team: ${formData.companySize}`,
+      action: 'Review lead and send discovery call link within 24 hours',
+      clientName: formData.name,
+      clientEmail: formData.email,
+      company: formData.company,
+      operationalDebt: formData.bottlenecks,
+      companySize: formData.companySize,
+      partnershipGoal: formData.partnershipGoal,
+      agencyEmail: "mambo2nd@gmail.com"
+    }
+  };
 
     try {
       const response = await fetch('https://giver-quarters-hardcore.ngrok-free.dev/webhook/communication-hub', {
@@ -35,16 +51,8 @@ const OnboardingPage: React.FC<OnboardingPageProps> = ({ onBack }) => {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          company: formData.company,
-          companySize: formData.companySize,
-          partnershipGoal: formData.partnershipGoal,
-          bottlenecks: formData.bottlenecks,
-          _subject: `[AUDIT REQUEST] ${formData.company} — ThusaLynk Infrastructure Audit`,
-          _replyto: formData.email,
-        })
+        body: JSON.stringify(payload)
+
       });
 
       const data = await response.json();
